@@ -4,8 +4,9 @@ import yfinance as yf
 import redis
 import os
 import json
+import pandas as pd
 
-app = FastAPI(title="Multi-Market Global Intelligence API")
+app = FastAPI(title="Advanced Financial Intelligence API")
 
 app.add_middleware(
     CORSMiddleware,
@@ -18,12 +19,6 @@ app.add_middleware(
 REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
 cache = redis.Redis(host=REDIS_HOST, port=6379, db=0, decode_responses=True)
 
-MARKET_CATEGORIES = {
-    "US": ["AAPL", "NVDA", "SPY", "MSFT", "QQQ"],
-    "CHINA_HK": ["0700.HK", "9988.HK", "600519.SS", "000001.SS", "300750.SZ"],
-    "ALTERNATIVE": ["BTC-USD", "ETH-USD", "GC=F", "CL=F", "VNQ"]
-}
-
 def detect_market(ticker: str) -> str:
     ticker = ticker.upper()
     if ticker.endswith(".HK") or ticker.endswith(".SS") or ticker.endswith(".SZ"):
@@ -35,7 +30,7 @@ def detect_market(ticker: str) -> str:
 @app.get("/api/quote/{ticker}")
 def get_quote(ticker: str):
     ticker = ticker.strip().upper()
-    cache_key = f"quote:{ticker}"
+    cache_key = f"quote_v3:{ticker}"
 
     cached = cache.get(cache_key)
     if cached:
@@ -45,17 +40,25 @@ def get_quote(ticker: str):
 
     try:
         stock = yf.Ticker(ticker)
-        hist = stock.history(period="2d")
+        # Fetch 7 days of history for the trendline chart
+        hist = stock.history(period="7d")
+
         if hist.empty:
             return {"error": f"No market data found for ticker '{ticker}'."}
 
+        # 24-hour calculations
         latest_close = float(hist['Close'].iloc[-1])
         prev_close = float(hist['Close'].iloc[-2]) if len(hist) > 1 else latest_close
         change_pct = round(((latest_close - prev_close) / prev_close) * 100, 2)
 
+        # 7-day trend data for Chart.js
+        trend_dates = hist.index.strftime('%Y-%m-%d').tolist()
+        trend_prices = [round(float(p), 2) for p in hist['Close'].tolist()]
+
         info = stock.info or {}
         currency = info.get("currency", "USD")
         short_name = info.get("shortName") or info.get("name") or ticker
+        market_state = info.get("marketState", "REGULAR")
 
         result = {
             "ticker": ticker,
@@ -64,6 +67,11 @@ def get_quote(ticker: str):
             "change_pct": change_pct,
             "currency": currency,
             "market_classification": detect_market(ticker),
+            "market_state": market_state,
+            "trend": {
+                "dates": trend_dates,
+                "prices": trend_prices
+            },
             "source": "Yahoo Finance (Live)"
         }
 
@@ -72,18 +80,6 @@ def get_quote(ticker: str):
         return result
     except Exception as e:
         return {"error": f"Failed to retrieve quote: {str(e)}"}
-
-@app.get("/api/featured")
-def get_featured():
-    featured_tickers = {
-        "us": "NVDA",
-        "china_hk": "0700.HK",
-        "alternative": "BTC-USD"
-    }
-    res = {}
-    for cat, sym in featured_tickers.items():
-        res[cat] = get_quote(sym)
-    return res
 
 @app.get("/health")
 def health():

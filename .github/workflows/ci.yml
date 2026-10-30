@@ -1,4 +1,4 @@
-name: Multi-Market Analytics Docker CI
+name: Advanced Analytics Platform CI
 
 on:
   push:
@@ -20,7 +20,7 @@ jobs:
         run: docker compose config
 
       - name: Build Backend Container
-        run: docker build -t multi-market-backend:test ./backend
+        run: docker build -t analytics-backend:test ./backend
 
       - name: Build Frontend Container
-        run: docker build -t multi-market-frontend:test ./frontend
+        run: docker build -t analytics-frontend:test ./frontend
