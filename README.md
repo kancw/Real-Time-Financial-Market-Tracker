@@ -9,7 +9,7 @@ A containerized financial intelligence stack engineered with **Docker**, **Docke
 | Market Segment | Coverage | Example Tickers Supported |
 | :--- | :--- | :--- |
 | **US Financial Markets** | Equities, Mega-cap Tech, Index ETFs | `AAPL`, `NVDA`, `MSFT`, `SPY`, `QQQ` |
-| **Greater China Markets** | Hong Kong Exchanges (HKEX), Shanghai (SSE), Shenzhen (SZSE) | `0700.HK` (Tencent), `9988.HK` (Alibaba), `600519.SS` (Moutai), `000001.SS` (SSE Index) |
+| **China Markets** | Hong Kong Exchanges (HKEX), Shanghai (SSE), Shenzhen (SZSE) | `0700.HK` (Tencent), `9988.HK` (Alibaba), `600519.SS` (Moutai), `000001.SS` (SSE Index) |
 | **Alternative Markets** | Digital Assets (Crypto), Hard Commodities, Real Estate REITs | `BTC-USD`, `ETH-USD`, `GC=F` (Gold), `CL=F` (Crude Oil), `VNQ` (Vanguard Real Estate) |
 
 ---
